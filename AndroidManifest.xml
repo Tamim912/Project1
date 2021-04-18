@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.socialmedia">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -9,7 +14,20 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".PostActivity"></activity>
+        <activity android:name=".ShowLikedUser"></activity>
+        <activity android:name=".FollowerActivity" />
+        <activity android:name=".UpdatePhoto" />
+        <activity android:name=".ShowStory" />
+        <activity android:name=".StoryActivity" />
+        <activity android:name=".CommentsActivity" />
+        <activity android:name=".SendImage" />
+        <activity android:name=".MessageActivity" />
+        <activity android:name=".ChatActivity" />
+        <activity
+            android:name=".IndividualPost"
+            android:label="@string/title_activity_individual_post"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".PostActivity" />
         <activity android:name=".AnswerActivity" />
         <activity android:name=".ReplyActivity" />
         <activity android:name=".YourQuestions" />
@@ -32,6 +50,9 @@
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
         <activity
             android:name=".RegisterActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+        <activity
+            android:name=".ShowUser"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
         <activity
             android:name=".LoginActivity"
