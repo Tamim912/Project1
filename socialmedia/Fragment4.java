@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +34,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -49,7 +52,9 @@ import com.gun0912.tedpermission.TedPermission;
 
 import java.security.Permission;
 import java.security.Permissions;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -58,7 +63,7 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
     ImageButton button;
     RecyclerView recyclerView;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference reference,likeref,storyRef,likelist;
+    DatabaseReference reference,likeref,storyRef,likelist,referenceDel;
     Boolean likechecker = false;
     DatabaseReference db1,db2,db3;
 
@@ -84,7 +89,10 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
         button = getActivity().findViewById(R.id.createpost_f4);
         reference = database.getReference("All posts");
         likeref = database.getReference("post likes");
+
         storyRef = database.getReference("All story");
+        referenceDel = database.getReference("story");
+
         recyclerView = getActivity().findViewById(R.id.rv_posts);
         recyclerView.setHasFixedSize(true);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -109,6 +117,8 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
         button.setOnClickListener(this);
 
         userMmber = new All_UserMmber();
+
+        checkStory(currentuid);
     }
 
     @Override
@@ -122,6 +132,25 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
 
 
         }
+    }
+    private void checkStory(String currentuid){
+        referenceDel.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                if (snapshot.hasChild(currentuid)){
+
+                }else {
+                    storyRef.removeValue();
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void showBottomsheet() {
@@ -196,7 +225,7 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
                         holder.menuoptions.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                showDialog(name,url,time,userid,type);
+                                showDialog(name,url,time,userid,type,postkey);
                             }
                         });
 
@@ -350,21 +379,19 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
         recyclerViewstory.setAdapter(firebaseRecyclerAdapterstory);
     }
 
-    void showDialog(String name,String url,String time,String userid,String type){
+    void showDialog(String name,String url,String time,String userid,String type,String postkey){
 
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View view = inflater.inflate(R.layout.post_options,null);
-        TextView download = view.findViewById(R.id.download_tv_post);
-        TextView share = view.findViewById(R.id.share_tv_post);
-        TextView delete = view.findViewById(R.id.delete_tv_post);
-        TextView copyurl = view.findViewById(R.id.copyurl_tv_post);
+        final Dialog dialog = new Dialog(getActivity());
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.post_options);
 
-
-        AlertDialog alertDialog = new AlertDialog.Builder(getActivity())
-                .setView(view)
-                .create();
-
-        alertDialog.show();
+        TextView download = dialog.findViewById(R.id.download_tv_post);
+        TextView share = dialog.findViewById(R.id.share_tv_post);
+        TextView delete = dialog.findViewById(R.id.delete_tv_post);
+        TextView copyurl = dialog.findViewById(R.id.copyurl_tv_post);
+        TextView edit = dialog.findViewById(R.id.edit_post);
+        EditText captionEt = dialog.findViewById(R.id.et_caption);
+        Button button = dialog.findViewById(R.id.btn_edit_caption);
 
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -372,9 +399,47 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
 
          if (userid.equals(currentUserid)){
              delete.setVisibility(View.VISIBLE);
+             edit.setVisibility(View.VISIBLE);
          }else {
-             delete.setVisibility(View.INVISIBLE);
+             delete.setVisibility(View.GONE);
+             edit.setVisibility(View.GONE);
          }
+
+         edit.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View view) {
+
+                 captionEt.setVisibility(View.VISIBLE);
+                 button.setVisibility(View.VISIBLE);
+
+                 button.setOnClickListener(new View.OnClickListener() {
+                     @Override
+                     public void onClick(View view) {
+
+
+                         Map<String,Object> map = new HashMap<>();
+                         map.put("desc",captionEt.getText().toString());
+
+                         FirebaseDatabase.getInstance().getReference()
+                                 .child("All posts")
+                                 .child(postkey)
+                                 .updateChildren(map)
+                                 .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                     @Override
+                                     public void onComplete(@NonNull Task<Void> task) {
+
+                                         Toast.makeText(getActivity(), "Updated", Toast.LENGTH_SHORT).show();
+                                         dialog.dismiss();
+                                     }
+                                 });
+
+                     }
+                 });
+
+
+             }
+         });
+
 
          delete.setOnClickListener(new View.OnClickListener() {
              @Override
@@ -443,7 +508,7 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
                              }
                          });
 
-                 alertDialog.dismiss();
+             dialog.dismiss();
 
              }
          });
@@ -472,7 +537,7 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
 
                              Toast.makeText(getActivity(), "Downloading", Toast.LENGTH_SHORT).show();
 
-                             alertDialog.dismiss();
+
                          }else {
                              DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
                              request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
@@ -487,7 +552,7 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
 
                              Toast.makeText(getActivity(), "Downloading", Toast.LENGTH_SHORT).show();
 
-                             alertDialog.dismiss();
+
                          }
 
                      }
@@ -504,11 +569,11 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
                          .check();
 
 
+                 dialog.dismiss();
 
 
              }
          });
-
 
          share.setOnClickListener(new View.OnClickListener() {
              @Override
@@ -521,7 +586,8 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
                  intent.setType("text/plain");
                  startActivity(intent.createChooser(intent,"share via"));
 
-                 alertDialog.dismiss();
+                 dialog.dismiss();
+
              }
          });
 
@@ -535,11 +601,16 @@ public class Fragment4 extends Fragment implements View.OnClickListener{
                  clip.getDescription();
                  Toast.makeText(getActivity(), "", Toast.LENGTH_SHORT).show();
 
-                 alertDialog.dismiss();
+                 dialog.dismiss();
 
              }
          });
 
+        dialog.show();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().getAttributes().windowAnimations = R.style.Bottomanim;
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
 
 
     }

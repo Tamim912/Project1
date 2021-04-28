@@ -183,7 +183,8 @@ public class Fragment1 extends Fragment implements View.OnClickListener{
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 followerno = (int)snapshot.getChildrenCount();
-                followertv.setText(Integer.toString(followerno));
+                followertv.setText(Integer.toString(followerno)+" Followers");
+
 
             }
 
@@ -212,7 +213,7 @@ public class Fragment1 extends Fragment implements View.OnClickListener{
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 post2 = (int)snapshot.getChildrenCount();
                 String total = Integer.toString(post1+post2);
-                postTv.setText(total);
+                postTv.setText(total+" Posts");
             }
 
             @Override

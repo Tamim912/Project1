@@ -6,15 +6,23 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -27,13 +35,16 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
 
     int counter = 0;
     ImageView imageViewSHowStory,imageViewUrl;
-    TextView textView;
+    TextView textView,tv_view;
+    ImageButton deletebtn;
 
     List<String> posturi;
     List<String>url;
     List<String>username;
+    List<Long>timeEnd;
 
     String userid;
+    String currentUid;
 
     StoriesProgressView storiesProgressView;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -55,6 +66,9 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
         imageViewUrl = findViewById(R.id.iv_ss);
         textView = findViewById(R.id.tv_uname_ss);
         storiesProgressView = findViewById(R.id.stories);
+
+        deletebtn = findViewById(R.id.btn_delstory);
+        tv_view = findViewById(R.id.tv_views);
 
         View reverse = findViewById(R.id.view_prev);
         reverse.setOnClickListener(new View.OnClickListener() {
@@ -99,7 +113,51 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
 
         reference = database.getReference("story").child(userid);
 
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+       currentUid = user.getUid();
 
+        if (currentUid.equals(userid)){
+            tv_view.setVisibility(View.VISIBLE);
+            deletebtn.setVisibility(View.VISIBLE);
+        }else {
+
+            tv_view.setVisibility(View.INVISIBLE);
+            deletebtn.setVisibility(View.INVISIBLE);
+        }
+
+
+        deletebtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Query query = reference.orderByChild("timeEnd").equalTo(timeEnd.get(counter));
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot dataSnapshot1 : snapshot.getChildren()){
+                            dataSnapshot1.getRef().removeValue();
+
+                            StorageReference storage = FirebaseStorage.getInstance().getReferenceFromUrl(posturi.get(counter));
+                            storage.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+
+                                    Toast.makeText(ShowStory.this, "deleted", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+            }
+        });
     }
 
     @Override
@@ -114,6 +172,7 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
         posturi = new ArrayList<>();
         username = new ArrayList<>();
         url = new ArrayList<>();
+        timeEnd = new ArrayList<>();
 
         reference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -122,6 +181,7 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
                 posturi.clear();
                 url.clear();
                 username.clear();
+                timeEnd.clear();
 
                 for (DataSnapshot snapshot1 : snapshot.getChildren()){
                     StoryMember member = snapshot1.getValue(StoryMember.class);
@@ -129,6 +189,7 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
                     posturi.add(member.getPostUri());
                     url.add(member.getUrl());
                     username.add(member.getName());
+                    timeEnd.add(member.getTimeEnd());
 
 
                 }
@@ -142,6 +203,8 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
                 Picasso.get().load(url.get(counter)).into(imageViewUrl);
                 textView.setText(username.get(counter));
 
+                view(currentUid);
+                ViewCount();
 
             }
 
@@ -157,6 +220,10 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
 
         Picasso.get().load(posturi.get(++counter)).into(imageViewSHowStory);
 
+
+        view(currentUid);
+        ViewCount();
+
     }
 
     @Override
@@ -164,6 +231,8 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
 
         if ((counter-1) <0)return;
         Picasso.get().load(posturi.get(--counter)).into(imageViewSHowStory);
+
+        ViewCount();
 
     }
 
@@ -186,6 +255,29 @@ public class ShowStory extends AppCompatActivity implements StoriesProgressView.
         storiesProgressView.pause();
         super.onPause();
 
+
+    }
+
+    private void view(String currentUid){
+        DatabaseReference viewRef = database.getReference("views");
+        viewRef.child(userid).child(currentUid).setValue(true);
+
+    }
+    private void ViewCount(){
+        DatabaseReference viewRef = database.getReference("views").child(currentUid);
+        viewRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                int viewCount = (int) snapshot.getChildrenCount();
+                tv_view.setText(viewCount+" Views");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
 
     }
 }
