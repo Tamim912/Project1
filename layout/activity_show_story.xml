@@ -9,6 +9,7 @@
 
 
 
+
     <jp.shts.android.storiesprogressview.StoriesProgressView
         android:id="@+id/stories"
         android:layout_width="match_parent"
@@ -65,6 +66,36 @@
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="0dp" />
+
+    <TextView
+        android:id="@+id/tv_views"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="0dp"
+        android:background="@drawable/button_back"
+        android:drawableStart="@drawable/ic_baseline_remove_red_eye_24"
+        android:drawablePadding="3dp"
+        android:padding="10dp"
+        android:text="Views"
+        android:visibility="invisible"
+        android:layout_margin="5dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    <ImageButton
+        android:id="@+id/btn_delstory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="0dp"
+        android:background="@android:color/transparent"
+        android:padding="10dp"
+        android:visibility="invisible"
+        android:layout_margin="5dp"
+        android:src="@drawable/ic_baseline_delete_24" />
 
 
 </RelativeLayout>
